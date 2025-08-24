@@ -1,96 +1,88 @@
-//Codingan ESP32 Wokwi
+#include <Servo.h>
 #include <Wire.h>
 #include <LiquidCrystal_I2C.h>
-#include <ESP32Servo.h>
 
-// Ultrasonic
-const int trigPin = 26;
-const int echoPin = 25;
-
-// LED dan Servo
-const int ledPin = 27;
 Servo servo_15;
-
-// LCD I2C (alamat bisa 0x27 atau 0x3F, cek dulu)
 LiquidCrystal_I2C lcd(0x27, 16, 2);
 
+int ultrasonicsensor = 0;
+unsigned long lastDetected = 0;
+bool detected = false;
+
+int messageIndex = 0;               // pesan aktif
+unsigned long lastMessageChange = 0; 
+String messages[] = {
+  " SELAMAT DATANG |  DI SICANTIK ",
+  "SAMPAH INOVATIF |  CEGAH JENTIK",
+  "  HIJAU UNTUK   | SAMPAH ORGANIK",
+  "  ORANYE UNTUK  |SAMPAH ANORGANIK",
+  "  TERIMA KASIH  |TELAH MEMBUANG SAMPAH"
+};
+int totalMessages = 5;
+
 long readUltrasonicDistance(int triggerPin, int echoPin) {
+  pinMode(triggerPin, OUTPUT);  
   digitalWrite(triggerPin, LOW);
   delayMicroseconds(2);
   digitalWrite(triggerPin, HIGH);
   delayMicroseconds(10);
   digitalWrite(triggerPin, LOW);
+  pinMode(echoPin, INPUT);
   return pulseIn(echoPin, HIGH);
 }
 
 void setup() {
   Serial.begin(9600);
-
-  // Pin setup
-  pinMode(trigPin, OUTPUT);
-  pinMode(echoPin, INPUT);
-  pinMode(ledPin, OUTPUT);
-
-  // Servo attach
   servo_15.attach(15, 500, 2500);
-
-  // I2C untuk LCD di ESP32 (SDA=16, SCL=17)
-  Wire.begin(16, 17);
-
-  // LCD init
+  pinMode(27, OUTPUT);
   lcd.init();
-  lcd.backlight();
-
+  lcd.display();
+  lcd.backlight();   
 }
 
 void loop() {
-  int distance = 0.01723 * readUltrasonicDistance(trigPin, echoPin);
-  Serial.println(distance);
+  ultrasonicsensor = 0.01723 * readUltrasonicDistance(26, 25);
+  Serial.println(ultrasonicsensor);
 
-  if (distance <= 200) {
+  unsigned long now = millis();
+
+  if (ultrasonicsensor > 0 && ultrasonicsensor <= 200) {
+    // === OBJEK TERDETEKSI ===
     servo_15.write(120);
-    digitalWrite(ledPin, HIGH);
+    digitalWrite(27, HIGH);
+    lcd.display();
+    lcd.backlight();
+    detected = true;
+    lastDetected = now;
 
-    // Pesan bergantian
-    lcd.clear(); lcd.backlight();
-    lcd.setCursor(0, 0); lcd.print(" SELAMAT DATANG  ");
-    lcd.setCursor(0, 1); lcd.print("  DI SICANTIK ");
-    delay(2000);
-
-    lcd.clear(); lcd.backlight();
-    lcd.setCursor(0, 0); lcd.print("SAMPAH INOVATIF ");
-    lcd.setCursor(0, 1); lcd.print("  CEGAH JENTIK  ");
-    delay(2000);
-
-    lcd.clear(); lcd.backlight();
-    lcd.setCursor(0, 0); lcd.print("  HIJAU UNTUK   ");
-    lcd.setCursor(0, 1); lcd.print(" SAMPAH ORGANIK ");
-    delay(1500);
-
-    lcd.clear(); lcd.backlight();
-    lcd.setCursor(0, 0); lcd.print("  ORANYE UNTUK  ");
-    lcd.setCursor(0, 1); lcd.print("SAMPAH ANORGANIK");
-    delay(1500);
-
-    // Running text
-    lcd.clear(); lcd.backlight();
-    lcd.setCursor(0, 0);
-    lcd.print("TERIMA KASIH   TERIMA KASIH");
-    lcd.setCursor(0, 1);
-    lcd.print("BUANG SAMPAH YA");
-
-    for (int i = 0; i < 20; i++) {  // scroll baris atas
-      lcd.scrollDisplayLeft();
-      delay(300);
+    // ganti pesan tiap 2 detik
+    if (now - lastMessageChange > 1500) {
+      lcd.clear();
+      lcd.setCursor(0,0);
+      lcd.print(messages[messageIndex].substring(0,16));
+      lcd.setCursor(0,1);
+      lcd.print(messages[messageIndex].substring(17));
+      messageIndex = (messageIndex + 1) % totalMessages;
+      lastMessageChange = now;
     }
 
-    delay(1000);
-
   } else {
-    servo_15.write(0);
-    lcd.clear();
-    lcd.noBacklight();   // matikan lampu
-    digitalWrite(ledPin, LOW);
-    delay(5000);
+    // === TIDAK TERDETEKSI ===
+    if (detected) {
+      servo_15.write(0);   // servo langsung tutup
+      detected = false;
+    }
+
+    unsigned long elapsed = now - lastDetected;
+
+    if (elapsed >= 1500) {
+      lcd.clear();
+      lcd.noDisplay();
+      lcd.noBacklight();
+    }
+
+    if (elapsed >= 5000) {
+      digitalWrite(27, LOW);
+    }
   }
 }
