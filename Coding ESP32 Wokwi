@@ -34,7 +34,9 @@ long readUltrasonicDistance(int triggerPin, int echoPin) {
 void setup() {
   Serial.begin(9600);
   servo_15.attach(15, 500, 2500);
-  pinMode(27, OUTPUT);
+  digitalWrite(33, HIGH);
+  digitalWrite(32, HIGH);
+  digitalWrite(35, HIGH);
   lcd.init();
   lcd.display();
   lcd.backlight();   
@@ -49,7 +51,9 @@ void loop() {
   if (ultrasonicsensor > 0 && ultrasonicsensor <= 200) {
     // === OBJEK TERDETEKSI ===
     servo_15.write(120);
-    digitalWrite(27, HIGH);
+    digitalWrite(33, HIGH);
+    digitalWrite(32, HIGH);
+    digitalWrite(35, HIGH);
     lcd.display();
     lcd.backlight();
     detected = true;
@@ -82,7 +86,9 @@ void loop() {
     }
 
     if (elapsed >= 5000) {
-      digitalWrite(27, LOW);
+      digitalWrite(33, LOW);
+      digitalWrite(32, LOW);
+      digitalWrite(35, LOW);
     }
   }
 }
