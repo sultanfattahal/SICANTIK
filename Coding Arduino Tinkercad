@@ -1,0 +1,92 @@
+// Coding Arduino Tinkercad
+#include <Servo.h>
+#include <Wire.h>
+#include <LiquidCrystal_I2C.h>
+
+int ultrasonicsensor = 0;
+
+long readUltrasonicDistance(int triggerPin, int echoPin)
+{
+  pinMode(triggerPin, OUTPUT);  
+  digitalWrite(triggerPin, LOW);
+  delayMicroseconds(2);
+  digitalWrite(triggerPin, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(triggerPin, LOW);
+  pinMode(echoPin, INPUT);
+  return pulseIn(echoPin, HIGH);
+}
+
+Servo servo_A3;
+
+// alamat I2C (biasanya 0x27 atau 0x3F, scan dulu kalau tidak muncul)
+LiquidCrystal_I2C lcd(0x27, 16, 2);
+
+void setup()
+{
+  Serial.begin(9600);
+  servo_A3.attach(A3, 500, 2500);
+  pinMode(4, OUTPUT);
+  lcd.init();        
+  lcd.backlight();   
+}
+
+void loop()
+{
+  ultrasonicsensor = 0.01723 * readUltrasonicDistance(7, 6);
+  Serial.println(ultrasonicsensor);
+
+  if (ultrasonicsensor <= 200) {
+    servo_A3.write(120);
+    digitalWrite(4, HIGH);
+
+    // Pesan bergantian
+    lcd.clear();
+    lcd.setCursor(0, 0);
+    lcd.print(" SELAMAT DATANG  ");
+    lcd.setCursor(0,1);
+    lcd.print("  DI SICANTIK ");
+    delay(2000);
+
+    lcd.clear();
+    lcd.setCursor(0, 0);
+    lcd.print("SAMPAH INOVATIF ");
+    lcd.setCursor(0,1);
+    lcd.print("  CEGAH JENTIK  ");
+    delay(2000);
+
+    lcd.clear();
+    lcd.print("  HIJAU UNTUK   ");
+    lcd.setCursor(0, 1);
+    lcd.print(" SAMPAH ORGANIK ");
+    delay(1500);
+
+    lcd.clear();
+    lcd.print("  ORANYE UNTUK  ");
+    lcd.setCursor(0, 1);
+    lcd.print("SAMPAH ANORGANIK");
+    delay(1500);
+
+    // Pesan panjang -> running text
+    lcd.clear();
+    lcd.setCursor(0, 0);
+    lcd.print("  TERIMA KASIH        TERIMA KASIH  ");
+    lcd.setCursor(0,1);
+    lcd.print("TELAH MEMBUANG SAMPAH PADA TEMPATNYA");
+
+    // scroll teks ke kiri sepanjang 56 langkah
+    for (int i = 0; i < 60; i++) {
+      lcd.scrollDisplayLeft();
+      delay(300);  // kecepatan scroll
+    }
+
+    delay(1000);
+
+  } else {
+    servo_A3.write(0);
+    lcd.clear();
+    lcd.noBacklight();   // matikan lampu
+    delay(5000);
+    digitalWrite(4, LOW);
+  }
+}
