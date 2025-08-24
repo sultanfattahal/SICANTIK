@@ -1,0 +1,96 @@
+//Codingan ESP32 Wokwi
+#include <Wire.h>
+#include <LiquidCrystal_I2C.h>
+#include <ESP32Servo.h>
+
+// Ultrasonic
+const int trigPin = 26;
+const int echoPin = 25;
+
+// LED dan Servo
+const int ledPin = 27;
+Servo servo_15;
+
+// LCD I2C (alamat bisa 0x27 atau 0x3F, cek dulu)
+LiquidCrystal_I2C lcd(0x27, 16, 2);
+
+long readUltrasonicDistance(int triggerPin, int echoPin) {
+  digitalWrite(triggerPin, LOW);
+  delayMicroseconds(2);
+  digitalWrite(triggerPin, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(triggerPin, LOW);
+  return pulseIn(echoPin, HIGH);
+}
+
+void setup() {
+  Serial.begin(9600);
+
+  // Pin setup
+  pinMode(trigPin, OUTPUT);
+  pinMode(echoPin, INPUT);
+  pinMode(ledPin, OUTPUT);
+
+  // Servo attach
+  servo_15.attach(15, 500, 2500);
+
+  // I2C untuk LCD di ESP32 (SDA=16, SCL=17)
+  Wire.begin(16, 17);
+
+  // LCD init
+  lcd.init();
+  lcd.backlight();
+
+}
+
+void loop() {
+  int distance = 0.01723 * readUltrasonicDistance(trigPin, echoPin);
+  Serial.println(distance);
+
+  if (distance <= 200) {
+    servo_15.write(120);
+    digitalWrite(ledPin, HIGH);
+
+    // Pesan bergantian
+    lcd.clear(); lcd.backlight();
+    lcd.setCursor(0, 0); lcd.print(" SELAMAT DATANG  ");
+    lcd.setCursor(0, 1); lcd.print("  DI SICANTIK ");
+    delay(2000);
+
+    lcd.clear(); lcd.backlight();
+    lcd.setCursor(0, 0); lcd.print("SAMPAH INOVATIF ");
+    lcd.setCursor(0, 1); lcd.print("  CEGAH JENTIK  ");
+    delay(2000);
+
+    lcd.clear(); lcd.backlight();
+    lcd.setCursor(0, 0); lcd.print("  HIJAU UNTUK   ");
+    lcd.setCursor(0, 1); lcd.print(" SAMPAH ORGANIK ");
+    delay(1500);
+
+    lcd.clear(); lcd.backlight();
+    lcd.setCursor(0, 0); lcd.print("  ORANYE UNTUK  ");
+    lcd.setCursor(0, 1); lcd.print("SAMPAH ANORGANIK");
+    delay(1500);
+
+    // Running text
+    lcd.clear(); lcd.backlight();
+    lcd.setCursor(0, 0);
+    lcd.print("TERIMA KASIH   TERIMA KASIH");
+    lcd.setCursor(0, 1);
+    lcd.print("BUANG SAMPAH YA");
+
+    for (int i = 0; i < 20; i++) {  // scroll baris atas
+      lcd.scrollDisplayLeft();
+      delay(300);
+    }
+
+    delay(1000);
+
+  } else {
+    servo_15.write(0);
+    lcd.clear();
+    lcd.noBacklight();   // matikan lampu
+    digitalWrite(ledPin, LOW);
+    delay(5000);
+  }
+}
