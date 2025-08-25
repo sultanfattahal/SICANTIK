@@ -9,8 +9,11 @@ int ultrasonicsensor = 0;
 unsigned long lastDetected = 0;
 bool detected = false;
 
-int messageIndex = 0;               // pesan aktif
-unsigned long lastMessageChange = 0; 
+int messageIndex = 0;
+int totalMessages = 5;
+bool messagesDone = false;  // menandai semua pesan sudah ditampilkan sekali
+unsigned long lastMessageChange = 0;
+
 String messages[] = {
   " SELAMAT DATANG |  DI SICANTIK ",
   "SAMPAH INOVATIF |  CEGAH JENTIK",
@@ -18,7 +21,6 @@ String messages[] = {
   "  ORANYE UNTUK  |SAMPAH ANORGANIK",
   "  TERIMA KASIH  |                     "
 };
-int totalMessages = 5;
 
 long readUltrasonicDistance(int triggerPin, int echoPin) {
   pinMode(triggerPin, OUTPUT);  
@@ -38,7 +40,6 @@ void setup() {
   pinMode(32, OUTPUT);
   pinMode(14, OUTPUT);
   lcd.init();
-  lcd.display();
   lcd.backlight();   
 }
 
@@ -54,38 +55,38 @@ void loop() {
     digitalWrite(33, HIGH);
     digitalWrite(32, HIGH);
     digitalWrite(14, HIGH);
-    lcd.display();
-    lcd.backlight();
     detected = true;
     lastDetected = now;
 
-    // ganti pesan tiap 2 detik
+    // ganti pesan tiap 1,5 detik
     if (now - lastMessageChange > 1500) {
       lcd.clear();
       lcd.setCursor(0,0);
-      lcd.print(messages[messageIndex].substring(0,16));
+      lcd.print(messages[messageIndex].substring(0, min(16, messages[messageIndex].length())));
       lcd.setCursor(0,1);
-      lcd.print(messages[messageIndex].substring(17));
-      messageIndex = (messageIndex + 1) % totalMessages;
+      lcd.print(messages[messageIndex].substring(min(16, messages[messageIndex].length())));
+      messageIndex = (messageIndex + 1) % totalMessages; // loop terus
       lastMessageChange = now;
+
+      // menandai sudah menampilkan semua pesan sekali
+      if (messageIndex == 0) messagesDone = true;
     }
 
   } else {
     // === TIDAK TERDETEKSI ===
     if (detected) {
-      servo_15.write(0);   // servo langsung tutup
+      servo_15.write(0);  
       detected = false;
     }
 
-    unsigned long elapsed = now - lastDetected;
-
-    if (elapsed >= 1500) {
+    // matikan LCD jika semua pesan sudah ditampilkan sekali
+    if (messagesDone) {
       lcd.clear();
-      lcd.noDisplay();
       lcd.noBacklight();
     }
 
-    if (elapsed >= 5000) {
+    // matikan LED setelah 5 detik
+    if (now - lastDetected >= 5000) {
       digitalWrite(33, LOW);
       digitalWrite(32, LOW);
       digitalWrite(14, LOW);
