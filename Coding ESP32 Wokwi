@@ -68,9 +68,11 @@ void loop() {
     if (now - lastMessageChange > 1500) {
       lcd.clear();
       lcd.setCursor(0,0);
-      lcd.print(messages[messageIndex].substring(0, min(16, messages[messageIndex].length())));
+      int len = messages[messageIndex].length();
+      lcd.print(messages[messageIndex].substring(0, (len < 16 ? len : 16)));
       lcd.setCursor(0,1);
-      lcd.print(messages[messageIndex].substring(min(16, messages[messageIndex].length())));
+      lcd.print(messages[messageIndex].substring(len > 16 ? 16 : len));
+
       messageIndex = (messageIndex + 1) % totalMessages; // loop terus
       lastMessageChange = now;
 
