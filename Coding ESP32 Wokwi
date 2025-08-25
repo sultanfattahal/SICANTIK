@@ -16,7 +16,7 @@ String messages[] = {
   "SAMPAH INOVATIF |  CEGAH JENTIK",
   "  HIJAU UNTUK   | SAMPAH ORGANIK",
   "  ORANYE UNTUK  |SAMPAH ANORGANIK",
-  "  TERIMA KASIH  |TELAH MEMBUANG SAMPAH"
+  "  TERIMA KASIH  |                     "
 };
 int totalMessages = 5;
 
