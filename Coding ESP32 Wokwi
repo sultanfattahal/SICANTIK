@@ -34,9 +34,9 @@ long readUltrasonicDistance(int triggerPin, int echoPin) {
 void setup() {
   Serial.begin(9600);
   servo_15.attach(15, 500, 2500);
-  pinMode(33, HIGH);
-  pinMode(32, HIGH);
-  pinMode(35, HIGH);
+  pinMode(33, OUTPUT);
+  pinMode(32, OUTPUT);
+  pinMode(35, OUTPUT);
   lcd.init();
   lcd.display();
   lcd.backlight();   
